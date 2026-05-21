@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Project Manager</title>
+<title>Syreen SWHR Task Management</title>
 <link rel="stylesheet" href="project-manager.css">
 </head>
 <body>
@@ -116,10 +116,6 @@ const STORAGE_KEY = 'pm-data-html';
 
 const DEFAULT_TASKS = [
   { id: 't1', title: 'Draft keynote abstract', category: 'conferences', programId: null, groupLabel: 'Q3 Conference Prep', dueDate: '2026-06-10', priority: 'High', done: false },
-  { id: 't2', title: 'Submit speaker bio', category: 'conferences', programId: null, groupLabel: 'Q3 Conference Prep', dueDate: '2026-06-15', priority: 'Medium', done: false },
-  { id: 't3', title: 'Review grant deliverables', category: 'programs', programId: null, groupLabel: null, dueDate: '2026-05-28', priority: 'High', done: false },
-  { id: 't4', title: 'Update org chart', category: 'admin', programId: null, groupLabel: 'Quarterly Updates', dueDate: '2026-06-01', priority: 'Low', done: true },
-  { id: 't5', title: 'Send partner newsletter', category: 'network', programId: null, groupLabel: null, dueDate: '2026-06-05', priority: 'Medium', done: false },
 ];
 
 let state = { tasks: [], programs: [], view: 'list', activeCategory: 'all', sortBy: 'dueDate', filterProgram: 'all', filterPriority: 'all', editingTaskId: null, monthOffset: 0 };
