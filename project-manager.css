@@ -1,0 +1,233 @@
+/* ═══════════════════════════════════════════
+   Project Manager — Stylesheet
+   Colors: Pink / Fuchsia palette
+   Font: Aptos
+   ═══════════════════════════════════════════ */
+
+/* ─── Reset & Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #fdf0f5 0%, #f5e6ee 40%, #f0dce8 100%);
+  min-height: 100vh;
+  padding: 24px 20px;
+  color: #3d2035;
+}
+
+/* ─── Layout ─── */
+.container { max-width: 1020px; margin: 0 auto; }
+
+/* ─── Header ─── */
+.header { margin-bottom: 24px; }
+.header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 28px; font-weight: 800; color: #6b3560; letter-spacing: -0.5px; }
+.header h1 span.icon { opacity: 0.5; margin-right: 8px; }
+.header .subtitle { margin-top: 4px; font-size: 13px; color: #a2708e; font-weight: 500; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ─── Buttons ─── */
+.btn {
+  padding: 8px 16px; border-radius: 10px; border: 1.5px solid #d4b0c4;
+  background: #fff; color: #7a4470; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: 'Aptos', 'Segoe UI', sans-serif;
+  transition: all .2s; white-space: nowrap;
+}
+.btn:hover { border-color: #b5436e; }
+.btn-primary { background: #b5436e; color: #fff; border: none; }
+.btn-primary:hover { background: #9e3a60; }
+.btn-reset { font-size: 11px; padding: 6px 12px; color: #b5a0ae; border-color: #e8d0dc; }
+
+/* ─── Category Tabs ─── */
+.tabs-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.tab {
+  padding: 7px 14px; border-radius: 10px; border: 1.5px solid #e8d0dc;
+  background: #fff; color: #7a4470; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: 'Aptos', 'Segoe UI', sans-serif;
+  transition: all .2s; display: flex; align-items: center; gap: 4px; white-space: nowrap;
+}
+.tab.active { background: #b5436e; color: #fff; border-color: #b5436e; }
+.tab .pct { opacity: 0.6; margin-left: 4px; font-size: 11px; }
+
+/* ─── View Toggle ─── */
+.view-toggle { display: flex; background: #fff; border-radius: 10px; border: 1px solid #e8d0dc; overflow: hidden; }
+
+.view-btn {
+  padding: 6px 16px; font-size: 12px; font-weight: 600; border: none; cursor: pointer;
+  background: transparent; color: #a2708e; font-family: 'Aptos', 'Segoe UI', sans-serif;
+  transition: all .2s;
+}
+.view-btn.active { background: #b5436e; color: #fff; }
+
+/* ─── Filters Bar ─── */
+.filters {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 10px 16px;
+  background: #fff; border-radius: 12px; border: 1px solid #f0d8e5;
+}
+.filters-label { font-size: 11px; font-weight: 700; color: #a2708e; text-transform: uppercase; letter-spacing: 1px; }
+
+.filter-select {
+  padding: 5px 28px 5px 10px; border-radius: 8px; border: 1px solid #e8d0dc;
+  font-size: 12px; font-family: 'Aptos', 'Segoe UI', sans-serif; outline: none;
+  background: #fdf8fa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b5436e'/%3E%3C/svg%3E") no-repeat right 12px center;
+  appearance: none; color: #3d2035;
+}
+.filter-clear { background: none; border: none; color: #b5436e; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Aptos', sans-serif; }
+.filter-summary { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8b6a7e; }
+.filter-summary strong { font-weight: 600; }
+
+/* ─── Progress Bar ─── */
+.progress-track { background: #f3e0ea; border-radius: 99px; overflow: hidden; }
+.progress-track.sm { height: 5px; width: 60px; }
+.progress-track.md { height: 8px; width: 100px; }
+
+.progress-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #c46e90, #b5436e);
+  transition: width .4s ease;
+}
+.progress-fill.complete { background: #7a4470; }
+
+/* ─── Tags / Pills ─── */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-weight: 600; border-radius: 20px; letter-spacing: 0.2px; white-space: nowrap;
+}
+.tag.sm { font-size: 10.5px; padding: 2px 8px; }
+.tag.md { font-size: 12px; padding: 3px 10px; }
+.tag .tag-remove { cursor: pointer; margin-left: 2px; font-size: 11px; opacity: 0.7; }
+
+/* ─── Group Labels ─── */
+.group-header {
+  font-size: 13px; font-weight: 700; color: #7a4470;
+  padding: 6px 14px; margin-bottom: 6px;
+  background: linear-gradient(90deg, #f3e0ea, transparent);
+  border-radius: 8px; display: flex; align-items: center; gap: 8px;
+}
+.group-header .count { font-size: 11px; font-weight: 500; color: #b5436e; opacity: 0.7; }
+.group-section { margin-bottom: 18px; }
+
+/* ─── Task Rows ─── */
+.task-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: #fff; border-radius: 12px; margin-bottom: 4px;
+  border: 1px solid #f0dce8; box-shadow: 0 1px 4px rgba(139,58,110,0.04);
+  transition: all .2s;
+}
+.task-row.done { opacity: 0.6; }
+.task-row.overdue { border-color: #e8a0b4; }
+
+.checkbox {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 2px solid #d4b0c4; background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .2s;
+}
+.checkbox.checked { border-color: #7a4470; background: #7a4470; }
+.checkbox.checked::after { content: '✓'; color: #fff; font-size: 12px; line-height: 1; }
+
+.task-content { flex: 1; min-width: 0; }
+.task-title { font-size: 13.5px; font-weight: 600; color: #3d2035; cursor: pointer; }
+.task-title.done { text-decoration: line-through; }
+.task-tags { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+.task-date { font-size: 11.5px; font-weight: 600; white-space: nowrap; color: #a2708e; }
+.task-date.overdue { color: #c0405a; }
+.task-delete { background: none; border: none; cursor: pointer; color: #d4b0c4; font-size: 16px; padding: 4px; line-height: 1; flex-shrink: 0; }
+
+/* ─── Calendar ─── */
+.cal-wrap {
+  background: #fff; border-radius: 16px; padding: 20px;
+  border: 1px solid #f0d8e5; box-shadow: 0 4px 20px rgba(139,58,110,0.06);
+}
+.cal-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+.cal-nav-btn {
+  background: #fdf0f5; border: 1px solid #e8d0dc; border-radius: 8px;
+  cursor: pointer; font-size: 18px; color: #b5436e; font-weight: 700;
+  padding: 4px 10px; line-height: 1;
+}
+.cal-nav-btn.today { font-size: 11px; padding: 4px 12px; margin-left: 4px; }
+.cal-month { font-weight: 700; font-size: 16px; color: #6b3560; min-width: 180px; text-align: center; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-day-label { text-align: center; font-size: 11px; font-weight: 700; color: #b5436e; padding: 4px 0; }
+
+.cal-cell {
+  min-height: 80px; padding: 4px 6px; border: 1px solid #f3e0ea;
+  border-radius: 8px; background: #fff; font-size: 11px; overflow: hidden;
+}
+.cal-cell.today { background: #fdf0f5; }
+.cal-cell-day { font-weight: 700; font-size: 12px; margin-bottom: 3px; color: #8b6a7e; }
+.cal-cell.today .cal-cell-day { color: #b5436e; }
+
+.cal-task {
+  font-weight: 600; font-size: 10px; padding: 2px 5px; border-radius: 4px;
+  margin-bottom: 2px; cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; border-left: 3px solid;
+}
+.cal-more { font-size: 9px; color: #a25080; font-weight: 600; }
+
+/* ─── Empty State ─── */
+.empty { text-align: center; padding: 48px; color: #b5436e; font-size: 14px; font-weight: 500; }
+
+/* ─── Modal ─── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(107,53,96,0.18); align-items: center; justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff; border-radius: 16px; padding: 28px 32px;
+  min-width: 360px; max-width: 480px; width: 90%;
+  box-shadow: 0 16px 48px rgba(139,58,110,0.18);
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h3 { font-size: 18px; color: #6b3560; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #b5436e; }
+.modal-body { display: flex; flex-direction: column; gap: 14px; }
+
+/* ─── Form Controls ─── */
+.form-label { display: block; font-size: 12px; font-weight: 600; color: #7a4470; margin-bottom: 4px; }
+.form-label .hint { font-weight: 400; color: #b5a0ae; }
+
+.form-input {
+  width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #e8d0dc;
+  font-size: 13px; font-family: 'Aptos', 'Segoe UI', sans-serif; outline: none;
+  background: #fdf8fa; transition: border .2s; box-sizing: border-box;
+}
+.form-input:focus { border-color: #b5436e; }
+
+.form-select {
+  width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #e8d0dc;
+  font-size: 13px; font-family: 'Aptos', 'Segoe UI', sans-serif; outline: none;
+  background: #fdf8fa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b5436e'/%3E%3C/svg%3E") no-repeat right 12px center;
+  appearance: none; box-sizing: border-box;
+}
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.form-submit {
+  padding: 10px 0; border-radius: 10px; border: none; cursor: pointer;
+  background: #b5436e; color: #fff; font-weight: 700; font-size: 14px;
+  font-family: 'Aptos', 'Segoe UI', sans-serif; margin-top: 4px;
+}
+.form-submit:hover { background: #9e3a60; }
+
+/* ─── Program Manager ─── */
+.programs-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.programs-hint { font-size: 12px; color: #b5a0ae; }
+.program-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.program-add-row .form-input { flex: 1; }
+
+.program-add-btn {
+  padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+  background: #b5436e; color: #fff; font-weight: 700; font-size: 13px;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+}
+.program-add-btn:hover { background: #9e3a60; }

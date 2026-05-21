@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Manager</title>
+<link rel="stylesheet" href="project-manager.css">
+</head>
+<body>
+
+<div class="container header">
+  <div class="header-row">
+    <div>
+      <h1><span class="icon">◈</span>Project Manager</h1>
+      <div class="subtitle" id="subtitle"></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-reset" onclick="resetData()">↺ Reset</button>
+      <button class="btn" onclick="openProgramModal()">✦ Manage Programs</button>
+      <button class="btn btn-primary" onclick="openNewTask()">+ New Task</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs-row">
+    <div class="tabs" id="tabs"></div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="viewList" onclick="setView('list')">☰ List</button>
+      <button class="view-btn" id="viewCal" onclick="setView('calendar')">▦ Calendar</button>
+    </div>
+  </div>
+  <div class="filters" id="filters"></div>
+  <div id="mainContent"></div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="taskModalOverlay" onclick="closeTaskModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="taskModalTitle">New Task</h3>
+      <button class="modal-close" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="form-label">Task Title</label>
+        <input class="form-input" id="fTitle" placeholder="What needs to be done?" onkeydown="if(event.key==='Enter')saveTask()">
+      </div>
+      <div class="form-row">
+        <div>
+          <label class="form-label">Category</label>
+          <select class="form-select" id="fCategory">
+            <option value="programs">◈ Programs</option>
+            <option value="conferences">◉ Conferences / Speaking</option>
+            <option value="admin">◆ Administrative</option>
+            <option value="network">◇ Network Engagement</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Program Tag</label>
+          <select class="form-select" id="fProgram"><option value="">None</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-input" id="fDueDate">
+        </div>
+        <div>
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="fPriority">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Group Label <span class="hint">(optional — groups tasks under a heading)</span></label>
+        <input class="form-input" id="fGroupLabel" placeholder="e.g. Q3 Conference Prep">
+      </div>
+      <button class="form-submit" onclick="saveTask()" id="taskSubmitBtn">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Program Modal -->
+<div class="modal-overlay" id="programModalOverlay" onclick="closeProgramModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Manage Programs</h3>
+      <button class="modal-close" onclick="closeProgramModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;color:#8b6a7e;margin-bottom:14px">Add programs to tag your tasks. Colors are assigned automatically.</p>
+      <div class="program-add-row">
+        <input class="form-input" id="newProgramInput" placeholder="New program name…" onkeydown="if(event.key==='Enter')addProgram()">
+        <button class="program-add-btn" onclick="addProgram()">Add</button>
+      </div>
+      <div class="programs-list" id="programsList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  { id: 'programs', label: 'Programs', icon: '◈' },
+  { id: 'conferences', label: 'Conferences / Speaking', icon: '◉' },
+  { id: 'admin', label: 'Administrative', icon: '◆' },
+  { id: 'network', label: 'Network Engagement', icon: '◇' },
+];
+const PRIORITY_OPTIONS = ['High', 'Medium', 'Low'];
+const PROGRAM_COLORS = ['#b5436e','#8b3a6e','#a25080','#c46e90','#7a4470','#d48ea8','#6b3560','#9e6088','#c07898','#884878'];
+const PRIORITY_COLORS = { High: '#b5436e', Medium: '#a25080', Low: '#c9a0b4' };
+const STORAGE_KEY = 'pm-data-html';
+
+const DEFAULT_TASKS = [
+  { id: 't1', title: 'Draft keynote abstract', category: 'conferences', programId: null, groupLabel: 'Q3 Conference Prep', dueDate: '2026-06-10', priority: 'High', done: false },
+  { id: 't2', title: 'Submit speaker bio', category: 'conferences', programId: null, groupLabel: 'Q3 Conference Prep', dueDate: '2026-06-15', priority: 'Medium', done: false },
+  { id: 't3', title: 'Review grant deliverables', category: 'programs', programId: null, groupLabel: null, dueDate: '2026-05-28', priority: 'High', done: false },
+  { id: 't4', title: 'Update org chart', category: 'admin', programId: null, groupLabel: 'Quarterly Updates', dueDate: '2026-06-01', priority: 'Low', done: true },
+  { id: 't5', title: 'Send partner newsletter', category: 'network', programId: null, groupLabel: null, dueDate: '2026-06-05', priority: 'Medium', done: false },
+];
+
+let state = { tasks: [], programs: [], view: 'list', activeCategory: 'all', sortBy: 'dueDate', filterProgram: 'all', filterPriority: 'all', editingTaskId: null, monthOffset: 0 };
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function formatDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function progColor(progId) {
+  const idx = state.programs.findIndex(p => p.id === progId);
+  return idx >= 0 ? PROGRAM_COLORS[idx % PROGRAM_COLORS.length] : '#a25080';
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      state.tasks = data.tasks || DEFAULT_TASKS;
+      state.programs = data.programs || [];
+      return;
+    }
+  } catch(e) {}
+  state.tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+  state.programs = [];
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks: state.tasks, programs: state.programs })); } catch(e) {}
+}
+
+function resetData() {
+  state.tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+  state.programs = [];
+  localStorage.removeItem(STORAGE_KEY);
+  render();
+}
+
+/* ─── Rendering ─── */
+function makeTag(label, color, small, removeAction) {
+  const sz = small ? 'sm' : 'md';
+  const rm = removeAction ? `<span class="tag-remove" onclick="${removeAction}">✕</span>` : '';
+  return `<span class="tag ${sz}" style="background:${color}1a;color:${color}">${escHtml(label)}${rm}</span>`;
+}
+
+function makeProgress(value, size) {
+  const cls = size === 'sm' ? 'sm' : 'md';
+  const fillCls = value === 100 ? 'complete' : '';
+  return `<div class="progress-track ${cls}"><div class="progress-fill ${fillCls}" style="width:${value}%"></div></div>`;
+}
+
+function catProgress(catId) {
+  const t = catId === 'all' ? state.tasks : state.tasks.filter(t => t.category === catId);
+  if (!t.length) return 0;
+  return Math.round((t.filter(x => x.done).length / t.length) * 100);
+}
+
+function getFiltered() {
+  let list = [...state.tasks];
+  if (state.activeCategory !== 'all') list = list.filter(t => t.category === state.activeCategory);
+  if (state.filterProgram !== 'all') list = list.filter(t => t.programId === state.filterProgram);
+  if (state.filterPriority !== 'all') list = list.filter(t => t.priority === state.filterPriority);
+  list.sort((a, b) => {
+    if (state.sortBy === 'dueDate') return (a.dueDate || '9999') < (b.dueDate || '9999') ? -1 : 1;
+    if (state.sortBy === 'program') return (a.programId || '') < (b.programId || '') ? -1 : 1;
+    if (state.sortBy === 'priority') { const o = { High: 0, Medium: 1, Low: 2 }; return (o[a.priority] ?? 3) - (o[b.priority] ?? 3); }
+    return 0;
+  });
+  return list;
+}
+
+function renderSubtitle() {
+  document.getElementById('subtitle').textContent = `${state.tasks.length} tasks · ${state.tasks.filter(t => t.done).length} completed · ${state.programs.length} programs`;
+}
+
+function renderTabs() {
+  let html = '';
+  const allActive = state.activeCategory === 'all' ? 'active' : '';
+  html += `<button class="tab ${allActive}" onclick="setCategory('all')">All<span class="pct">${catProgress('all')}%</span></button>`;
+  CATEGORIES.forEach(c => {
+    const act = state.activeCategory === c.id ? 'active' : '';
+    html += `<button class="tab ${act}" onclick="setCategory('${c.id}')">${c.icon} ${escHtml(c.label)}<span class="pct">${catProgress(c.id)}%</span></button>`;
+  });
+  document.getElementById('tabs').innerHTML = html;
+  document.getElementById('viewList').className = 'view-btn' + (state.view === 'list' ? ' active' : '');
+  document.getElementById('viewCal').className = 'view-btn' + (state.view === 'calendar' ? ' active' : '');
+}
+
+function renderFilters() {
+  const filtered = getFiltered();
+  const progOpts = state.programs.map(p => `<option value="${p.id}"${state.filterProgram === p.id ? ' selected' : ''}>${escHtml(p.label)}</option>`).join('');
+  const prioOpts = PRIORITY_OPTIONS.map(p => `<option value="${p}"${state.filterPriority === p ? ' selected' : ''}>${p}</option>`).join('');
+  const clearBtn = (state.filterProgram !== 'all' || state.filterPriority !== 'all')
+    ? `<button class="filter-clear" onclick="clearFilters()">✕ Clear</button>` : '';
+  const pct = filtered.length ? Math.round((filtered.filter(t => t.done).length / filtered.length) * 100) : 0;
+  document.getElementById('filters').innerHTML = `
+    <span class="filters-label">Filters</span>
+    <select class="filter-select" onchange="state.sortBy=this.value;render()">
+      <option value="dueDate"${state.sortBy==='dueDate'?' selected':''}>Sort: Due Date</option>
+      <option value="program"${state.sortBy==='program'?' selected':''}>Sort: Program</option>
+      <option value="priority"${state.sortBy==='priority'?' selected':''}>Sort: Priority</option>
+    </select>
+    <select class="filter-select" onchange="state.filterProgram=this.value;render()">
+      <option value="all"${state.filterProgram==='all'?' selected':''}>All Programs</option>
+      ${progOpts}
+    </select>
+    <select class="filter-select" onchange="state.filterPriority=this.value;render()">
+      <option value="all"${state.filterPriority==='all'?' selected':''}>All Priorities</option>
+      ${prioOpts}
+    </select>
+    ${clearBtn}
+    <div class="filter-summary"><strong>${filtered.length}</strong> tasks ${makeProgress(pct, 'sm')}</div>
+  `;
+}
+
+function renderTaskRow(t) {
+  const cat = CATEGORIES.find(c => c.id === t.category);
+  const prog = state.programs.find(p => p.id === t.programId);
+  const overdue = t.dueDate && t.dueDate < todayStr() && !t.done;
+  const rowCls = `task-row${t.done ? ' done' : ''}${overdue ? ' overdue' : ''}`;
+  const cbCls = `checkbox${t.done ? ' checked' : ''}`;
+  const titleCls = `task-title${t.done ? ' done' : ''}`;
+  const dateCls = `task-date${overdue ? ' overdue' : ''}`;
+
+  let tags = '';
+  if (cat) tags += makeTag(cat.label, '#8b3a6e', true);
+  if (prog) tags += makeTag(prog.label, progColor(prog.id), true);
+  if (t.priority) tags += makeTag(t.priority, PRIORITY_COLORS[t.priority], true);
+
+  return `<div class="${rowCls}">
+    <div class="${cbCls}" onclick="toggleDone('${t.id}')"></div>
+    <div class="task-content">
+      <div class="${titleCls}" onclick="openEditTask('${t.id}')">${escHtml(t.title)}</div>
+      <div class="task-tags">${tags}</div>
+    </div>
+    ${t.dueDate ? `<div class="${dateCls}">${overdue ? '⚠ ' : ''}${formatDate(t.dueDate)}</div>` : ''}
+    <button class="task-delete" onclick="deleteTask('${t.id}')">×</button>
+  </div>`;
+}
+
+function renderListView() {
+  const filtered = getFiltered();
+  if (!filtered.length) {
+    return `<div class="empty">No tasks match your filters.<br><button class="btn btn-primary" style="margin-top:12px" onclick="openNewTask()">+ Create one</button></div>`;
+  }
+  const groups = new Map();
+  filtered.forEach(t => {
+    const key = t.groupLabel || '__ungrouped__';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(t);
+  });
+  let html = '';
+  groups.forEach((tasks, label) => {
+    html += '<div class="group-section">';
+    if (label !== '__ungrouped__') {
+      const done = tasks.filter(t => t.done).length;
+      const pct = Math.round((done / tasks.length) * 100);
+      html += `<div class="group-header"><span style="font-size:10px">▸</span> ${escHtml(label)} <span class="count">${done}/${tasks.length}</span> ${makeProgress(pct, 'sm')}</div>`;
+    }
+    tasks.forEach(t => { html += renderTaskRow(t); });
+    html += '</div>';
+  });
+  return html;
+}
+
+function renderCalendarView() {
+  const filtered = getFiltered();
+  const today = new Date();
+  const viewDate = new Date(today.getFullYear(), today.getMonth() + state.monthOffset, 1);
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDay = new Date(year, month, 1).getDay();
+  const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const td = todayStr();
+
+  const byDate = {};
+  filtered.forEach(t => { if (t.dueDate) { if (!byDate[t.dueDate]) byDate[t.dueDate] = []; byDate[t.dueDate].push(t); } });
+
+  let cells = '';
+  for (let i = 0; i < startDay; i++) cells += '<div></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = ds === td;
+    const dayTasks = byDate[ds] || [];
+    let inner = `<div class="cal-cell-day">${d}</div>`;
+    dayTasks.slice(0, 3).forEach(t => {
+      const prog = state.programs.find(p => p.id === t.programId);
+      const col = prog ? progColor(prog.id) : '#a25080';
+      inner += `<div class="cal-task" style="background:${col}22;color:${col};border-left-color:${col}" onclick="openEditTask('${t.id}')">${escHtml(t.title)}</div>`;
+    });
+    if (dayTasks.length > 3) inner += `<div class="cal-more">+${dayTasks.length - 3} more</div>`;
+    cells += `<div class="cal-cell${isToday ? ' today' : ''}">${inner}</div>`;
+  }
+
+  return `<div class="cal-wrap">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="state.monthOffset--;render()">‹</button>
+      <span class="cal-month">${monthLabel}</span>
+      <button class="cal-nav-btn" onclick="state.monthOffset++;render()">›</button>
+      <button class="cal-nav-btn today" onclick="state.monthOffset=0;render()">Today</button>
+    </div>
+    <div class="cal-grid" style="margin-bottom:4px">
+      ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-day-label">${d}</div>`).join('')}
+    </div>
+    <div class="cal-grid">${cells}</div>
+  </div>`;
+}
+
+function render() {
+  renderSubtitle();
+  renderTabs();
+  renderFilters();
+  document.getElementById('mainContent').innerHTML = state.view === 'calendar' ? renderCalendarView() : renderListView();
+}
+
+/* ─── Actions ─── */
+function setView(v) { state.view = v; render(); }
+function setCategory(c) { state.activeCategory = c; render(); }
+function clearFilters() { state.filterProgram = 'all'; state.filterPriority = 'all'; render(); }
+function toggleDone(id) { const t = state.tasks.find(x => x.id === id); if (t) t.done = !t.done; save(); render(); }
+function deleteTask(id) { state.tasks = state.tasks.filter(t => t.id !== id); save(); render(); }
+
+function populateProgramSelect() {
+  const sel = document.getElementById('fProgram');
+  sel.innerHTML = '<option value="">None</option>' + state.programs.map(p => `<option value="${p.id}">${escHtml(p.label)}</option>`).join('');
+}
+
+function openNewTask() {
+  state.editingTaskId = null;
+  document.getElementById('taskModalTitle').textContent = 'New Task';
+  document.getElementById('taskSubmitBtn').textContent = 'Add Task';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fCategory').value = state.activeCategory !== 'all' ? state.activeCategory : 'programs';
+  document.getElementById('fDueDate').value = '';
+  document.getElementById('fPriority').value = 'Medium';
+  document.getElementById('fGroupLabel').value = '';
+  populateProgramSelect();
+  document.getElementById('fProgram').value = '';
+  document.getElementById('taskModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fTitle').focus(), 100);
+}
+
+function openEditTask(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (!t) return;
+  state.editingTaskId = id;
+  document.getElementById('taskModalTitle').textContent = 'Edit Task';
+  document.getElementById('taskSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('fTitle').value = t.title;
+  document.getElementById('fCategory').value = t.category;
+  document.getElementById('fDueDate').value = t.dueDate || '';
+  document.getElementById('fPriority').value = t.priority || 'Medium';
+  document.getElementById('fGroupLabel').value = t.groupLabel || '';
+  populateProgramSelect();
+  document.getElementById('fProgram').value = t.programId || '';
+  document.getElementById('taskModalOverlay').classList.add('open');
+}
+
+function closeTaskModal() { document.getElementById('taskModalOverlay').classList.remove('open'); }
+
+function saveTask() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) return;
+  const data = {
+    title,
+    category: document.getElementById('fCategory').value,
+    programId: document.getElementById('fProgram').value || null,
+    dueDate: document.getElementById('fDueDate').value || null,
+    priority: document.getElementById('fPriority').value,
+    groupLabel: document.getElementById('fGroupLabel').value.trim() || null,
+  };
+  if (state.editingTaskId) {
+    const t = state.tasks.find(x => x.id === state.editingTaskId);
+    if (t) Object.assign(t, data);
+  } else {
+    state.tasks.push({ id: uid(), ...data, done: false });
+  }
+  save();
+  closeTaskModal();
+  render();
+}
+
+function openProgramModal() {
+  renderProgramsList();
+  document.getElementById('newProgramInput').value = '';
+  document.getElementById('programModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('newProgramInput').focus(), 100);
+}
+function closeProgramModal() { document.getElementById('programModalOverlay').classList.remove('open'); }
+
+function renderProgramsList() {
+  const el = document.getElementById('programsList');
+  if (!state.programs.length) {
+    el.innerHTML = '<span class="programs-hint">No programs yet — add one above.</span>';
+    return;
+  }
+  el.innerHTML = state.programs.map((p, i) =>
+    makeTag(p.label, PROGRAM_COLORS[i % PROGRAM_COLORS.length], false, `event.stopPropagation();removeProgram('${p.id}')`)
+  ).join('');
+}
+
+function addProgram() {
+  const inp = document.getElementById('newProgramInput');
+  const name = inp.value.trim();
+  if (!name || state.programs.find(p => p.label.toLowerCase() === name.toLowerCase())) return;
+  state.programs.push({ id: uid(), label: name });
+  inp.value = '';
+  save();
+  renderProgramsList();
+  render();
+}
+
+function removeProgram(id) {
+  state.programs = state.programs.filter(p => p.id !== id);
+  state.tasks.forEach(t => { if (t.programId === id) t.programId = null; });
+  save();
+  renderProgramsList();
+  render();
+}
+
+// Init
+load();
+render();
+</script>
+</body>
+</html>
