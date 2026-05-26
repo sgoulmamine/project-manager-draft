@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Syreen SWHR Task Management</title>
+<title>Strategic Program Dashboard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="project-manager.css">
 </head>
 <body>
@@ -11,7 +16,7 @@
 <div class="container header">
   <div class="header-row">
     <div>
-      <h1><span class="icon">◈</span>Project Manager</h1>
+      <h1><span class="icon">◈</span>Strategic Program Dashboard</h1>
       <div class="subtitle" id="subtitle"></div>
     </div>
     <div class="header-actions">
@@ -92,7 +97,9 @@
       <button class="modal-close" onclick="closeProgramModal()">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12.5px;color:#8b6a7e;margin-bottom:14px">Add programs to tag your tasks. Colors are assigned automatically.</p>
+      <p class="programs-hint" style="margin-bottom:14px">
+        Add programs to tag your tasks. Colors are assigned automatically.
+      </p>
       <div class="program-add-row">
         <input class="form-input" id="newProgramInput" placeholder="New program name…" onkeydown="if(event.key==='Enter')addProgram()">
         <button class="program-add-btn" onclick="addProgram()">Add</button>
@@ -109,27 +116,119 @@ const CATEGORIES = [
   { id: 'admin', label: 'Administrative', icon: '◆' },
   { id: 'network', label: 'Network Engagement', icon: '◇' },
 ];
-const PRIORITY_OPTIONS = ['High', 'Medium', 'Low'];
-const PROGRAM_COLORS = ['#b5436e','#8b3a6e','#a25080','#c46e90','#7a4470','#d48ea8','#6b3560','#9e6088','#c07898','#884878'];
-const PRIORITY_COLORS = { High: '#b5436e', Medium: '#a25080', Low: '#c9a0b4' };
-const STORAGE_KEY = 'pm-data-html';
 
-const DEFAULT_TASKS = [
-  { id: 't1', title: 'Draft keynote abstract', category: 'conferences', programId: null, groupLabel: 'Q3 Conference Prep', dueDate: '2026-06-10', priority: 'High', done: false },
+const PRIORITY_OPTIONS = ['High', 'Medium', 'Low'];
+
+const COLORS = {
+  pink50: '#fff1f7',
+  pink100: '#ffe4ef',
+  pink200: '#ffc9de',
+  pink300: '#f89abb',
+  pink400: '#ec6f9d',
+  pink500: '#d9467f',
+  pink600: '#bd2f68',
+  pink700: '#9d2557',
+
+  plum900: '#321424',
+  plum800: '#4a1938',
+  plum700: '#6d2855',
+  plum600: '#87406c',
+
+  sage50: '#f2faf6',
+  sage100: '#e0f2e8',
+  sage500: '#5b8f76',
+  sage600: '#46745f',
+
+  teal50: '#eefafb',
+  teal100: '#d8f1f3',
+  teal500: '#43a6af',
+  teal600: '#2f8f9d',
+
+  gold50: '#fff9eb',
+  gold100: '#fff0c7',
+  gold500: '#c88a2e',
+
+  surface: '#ffffff',
+  surfaceSoft: '#fff8fb',
+  textMain: '#34202d',
+  textMuted: '#8d6d7f',
+  textLight: '#b69aac',
+  borderSoft: '#f3cfe0',
+  borderMedium: '#e7aac4',
+};
+
+const PROGRAM_COLORS = [
+  COLORS.pink600,
+  COLORS.plum700,
+  COLORS.pink500,
+  COLORS.teal600,
+  COLORS.sage500,
+  COLORS.gold500,
+  COLORS.pink400,
+  COLORS.plum600,
+  COLORS.teal500,
+  COLORS.sage600,
 ];
 
-let state = { tasks: [], programs: [], view: 'list', activeCategory: 'all', sortBy: 'dueDate', filterProgram: 'all', filterPriority: 'all', editingTaskId: null, monthOffset: 0 };
+const PRIORITY_COLORS = {
+  High: COLORS.pink700,
+  Medium: COLORS.gold500,
+  Low: COLORS.sage500,
+};
 
-function uid() { return Math.random().toString(36).slice(2, 10); }
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+const STORAGE_KEY = 'strategic-program-dashboard-data';
+
+const DEFAULT_TASKS = [
+  {
+    id: 't1',
+    title: 'Draft keynote abstract',
+    category: 'conferences',
+    programId: null,
+    groupLabel: 'Q3 Conference Prep',
+    dueDate: '2026-06-10',
+    priority: 'High',
+    done: false
+  },
+];
+
+let state = {
+  tasks: [],
+  programs: [],
+  view: 'list',
+  activeCategory: 'all',
+  sortBy: 'dueDate',
+  filterProgram: 'all',
+  filterPriority: 'all',
+  editingTaskId: null,
+  monthOffset: 0
+};
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
 function formatDate(d) {
   if (!d) return '';
-  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 }
-function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
 function progColor(progId) {
   const idx = state.programs.findIndex(p => p.id === progId);
-  return idx >= 0 ? PROGRAM_COLORS[idx % PROGRAM_COLORS.length] : '#a25080';
+  return idx >= 0 ? PROGRAM_COLORS[idx % PROGRAM_COLORS.length] : COLORS.pink500;
 }
 
 function load() {
@@ -142,12 +241,18 @@ function load() {
       return;
     }
   } catch(e) {}
+
   state.tasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
   state.programs = [];
 }
 
 function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks: state.tasks, programs: state.programs })); } catch(e) {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      tasks: state.tasks,
+      programs: state.programs
+    }));
+  } catch(e) {}
 }
 
 function resetData() {
@@ -178,30 +283,42 @@ function catProgress(catId) {
 
 function getFiltered() {
   let list = [...state.tasks];
+
   if (state.activeCategory !== 'all') list = list.filter(t => t.category === state.activeCategory);
   if (state.filterProgram !== 'all') list = list.filter(t => t.programId === state.filterProgram);
   if (state.filterPriority !== 'all') list = list.filter(t => t.priority === state.filterPriority);
+
   list.sort((a, b) => {
     if (state.sortBy === 'dueDate') return (a.dueDate || '9999') < (b.dueDate || '9999') ? -1 : 1;
     if (state.sortBy === 'program') return (a.programId || '') < (b.programId || '') ? -1 : 1;
-    if (state.sortBy === 'priority') { const o = { High: 0, Medium: 1, Low: 2 }; return (o[a.priority] ?? 3) - (o[b.priority] ?? 3); }
+
+    if (state.sortBy === 'priority') {
+      const o = { High: 0, Medium: 1, Low: 2 };
+      return (o[a.priority] ?? 3) - (o[b.priority] ?? 3);
+    }
+
     return 0;
   });
+
   return list;
 }
 
 function renderSubtitle() {
-  document.getElementById('subtitle').textContent = `${state.tasks.length} tasks · ${state.tasks.filter(t => t.done).length} completed · ${state.programs.length} programs`;
+  document.getElementById('subtitle').textContent =
+    `${state.tasks.length} tasks · ${state.tasks.filter(t => t.done).length} completed · ${state.programs.length} programs`;
 }
 
 function renderTabs() {
   let html = '';
   const allActive = state.activeCategory === 'all' ? 'active' : '';
+
   html += `<button class="tab ${allActive}" onclick="setCategory('all')">All<span class="pct">${catProgress('all')}%</span></button>`;
+
   CATEGORIES.forEach(c => {
     const act = state.activeCategory === c.id ? 'active' : '';
     html += `<button class="tab ${act}" onclick="setCategory('${c.id}')">${c.icon} ${escHtml(c.label)}<span class="pct">${catProgress(c.id)}%</span></button>`;
   });
+
   document.getElementById('tabs').innerHTML = html;
   document.getElementById('viewList').className = 'view-btn' + (state.view === 'list' ? ' active' : '');
   document.getElementById('viewCal').className = 'view-btn' + (state.view === 'calendar' ? ' active' : '');
@@ -209,11 +326,22 @@ function renderTabs() {
 
 function renderFilters() {
   const filtered = getFiltered();
-  const progOpts = state.programs.map(p => `<option value="${p.id}"${state.filterProgram === p.id ? ' selected' : ''}>${escHtml(p.label)}</option>`).join('');
-  const prioOpts = PRIORITY_OPTIONS.map(p => `<option value="${p}"${state.filterPriority === p ? ' selected' : ''}>${p}</option>`).join('');
+  const progOpts = state.programs
+    .map(p => `<option value="${p.id}"${state.filterProgram === p.id ? ' selected' : ''}>${escHtml(p.label)}</option>`)
+    .join('');
+
+  const prioOpts = PRIORITY_OPTIONS
+    .map(p => `<option value="${p}"${state.filterPriority === p ? ' selected' : ''}>${p}</option>`)
+    .join('');
+
   const clearBtn = (state.filterProgram !== 'all' || state.filterPriority !== 'all')
-    ? `<button class="filter-clear" onclick="clearFilters()">✕ Clear</button>` : '';
-  const pct = filtered.length ? Math.round((filtered.filter(t => t.done).length / filtered.length) * 100) : 0;
+    ? `<button class="filter-clear" onclick="clearFilters()">✕ Clear</button>`
+    : '';
+
+  const pct = filtered.length
+    ? Math.round((filtered.filter(t => t.done).length / filtered.length) * 100)
+    : 0;
+
   document.getElementById('filters').innerHTML = `
     <span class="filters-label">Filters</span>
     <select class="filter-select" onchange="state.sortBy=this.value;render()">
@@ -238,13 +366,14 @@ function renderTaskRow(t) {
   const cat = CATEGORIES.find(c => c.id === t.category);
   const prog = state.programs.find(p => p.id === t.programId);
   const overdue = t.dueDate && t.dueDate < todayStr() && !t.done;
+
   const rowCls = `task-row${t.done ? ' done' : ''}${overdue ? ' overdue' : ''}`;
   const cbCls = `checkbox${t.done ? ' checked' : ''}`;
   const titleCls = `task-title${t.done ? ' done' : ''}`;
   const dateCls = `task-date${overdue ? ' overdue' : ''}`;
 
   let tags = '';
-  if (cat) tags += makeTag(cat.label, '#8b3a6e', true);
+  if (cat) tags += makeTag(cat.label, COLORS.plum700, true);
   if (prog) tags += makeTag(prog.label, progColor(prog.id), true);
   if (t.priority) tags += makeTag(t.priority, PRIORITY_COLORS[t.priority], true);
 
@@ -261,26 +390,38 @@ function renderTaskRow(t) {
 
 function renderListView() {
   const filtered = getFiltered();
+
   if (!filtered.length) {
     return `<div class="empty">No tasks match your filters.<br><button class="btn btn-primary" style="margin-top:12px" onclick="openNewTask()">+ Create one</button></div>`;
   }
+
   const groups = new Map();
+
   filtered.forEach(t => {
     const key = t.groupLabel || '__ungrouped__';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(t);
   });
+
   let html = '';
+
   groups.forEach((tasks, label) => {
     html += '<div class="group-section">';
+
     if (label !== '__ungrouped__') {
       const done = tasks.filter(t => t.done).length;
       const pct = Math.round((done / tasks.length) * 100);
+
       html += `<div class="group-header"><span style="font-size:10px">▸</span> ${escHtml(label)} <span class="count">${done}/${tasks.length}</span> ${makeProgress(pct, 'sm')}</div>`;
     }
-    tasks.forEach(t => { html += renderTaskRow(t); });
+
+    tasks.forEach(t => {
+      html += renderTaskRow(t);
+    });
+
     html += '</div>';
   });
+
   return html;
 }
 
@@ -288,6 +429,7 @@ function renderCalendarView() {
   const filtered = getFiltered();
   const today = new Date();
   const viewDate = new Date(today.getFullYear(), today.getMonth() + state.monthOffset, 1);
+
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -296,21 +438,35 @@ function renderCalendarView() {
   const td = todayStr();
 
   const byDate = {};
-  filtered.forEach(t => { if (t.dueDate) { if (!byDate[t.dueDate]) byDate[t.dueDate] = []; byDate[t.dueDate].push(t); } });
+  filtered.forEach(t => {
+    if (t.dueDate) {
+      if (!byDate[t.dueDate]) byDate[t.dueDate] = [];
+      byDate[t.dueDate].push(t);
+    }
+  });
 
   let cells = '';
+
   for (let i = 0; i < startDay; i++) cells += '<div></div>';
+
   for (let d = 1; d <= daysInMonth; d++) {
-    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const isToday = ds === td;
     const dayTasks = byDate[ds] || [];
+
     let inner = `<div class="cal-cell-day">${d}</div>`;
+
     dayTasks.slice(0, 3).forEach(t => {
       const prog = state.programs.find(p => p.id === t.programId);
-      const col = prog ? progColor(prog.id) : '#a25080';
+      const col = prog ? progColor(prog.id) : COLORS.pink500;
+
       inner += `<div class="cal-task" style="background:${col}22;color:${col};border-left-color:${col}" onclick="openEditTask('${t.id}')">${escHtml(t.title)}</div>`;
     });
-    if (dayTasks.length > 3) inner += `<div class="cal-more">+${dayTasks.length - 3} more</div>`;
+
+    if (dayTasks.length > 3) {
+      inner += `<div class="cal-more">+${dayTasks.length - 3} more</div>`;
+    }
+
     cells += `<div class="cal-cell${isToday ? ' today' : ''}">${inner}</div>`;
   }
 
@@ -332,23 +488,50 @@ function render() {
   renderSubtitle();
   renderTabs();
   renderFilters();
-  document.getElementById('mainContent').innerHTML = state.view === 'calendar' ? renderCalendarView() : renderListView();
+  document.getElementById('mainContent').innerHTML =
+    state.view === 'calendar' ? renderCalendarView() : renderListView();
 }
 
 /* ─── Actions ─── */
-function setView(v) { state.view = v; render(); }
-function setCategory(c) { state.activeCategory = c; render(); }
-function clearFilters() { state.filterProgram = 'all'; state.filterPriority = 'all'; render(); }
-function toggleDone(id) { const t = state.tasks.find(x => x.id === id); if (t) t.done = !t.done; save(); render(); }
-function deleteTask(id) { state.tasks = state.tasks.filter(t => t.id !== id); save(); render(); }
+function setView(v) {
+  state.view = v;
+  render();
+}
+
+function setCategory(c) {
+  state.activeCategory = c;
+  render();
+}
+
+function clearFilters() {
+  state.filterProgram = 'all';
+  state.filterPriority = 'all';
+  render();
+}
+
+function toggleDone(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (t) t.done = !t.done;
+  save();
+  render();
+}
+
+function deleteTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  save();
+  render();
+}
 
 function populateProgramSelect() {
   const sel = document.getElementById('fProgram');
-  sel.innerHTML = '<option value="">None</option>' + state.programs.map(p => `<option value="${p.id}">${escHtml(p.label)}</option>`).join('');
+  sel.innerHTML =
+    '<option value="">None</option>' +
+    state.programs.map(p => `<option value="${p.id}">${escHtml(p.label)}</option>`).join('');
 }
 
 function openNewTask() {
   state.editingTaskId = null;
+
   document.getElementById('taskModalTitle').textContent = 'New Task';
   document.getElementById('taskSubmitBtn').textContent = 'Add Task';
   document.getElementById('fTitle').value = '';
@@ -356,16 +539,21 @@ function openNewTask() {
   document.getElementById('fDueDate').value = '';
   document.getElementById('fPriority').value = 'Medium';
   document.getElementById('fGroupLabel').value = '';
+
   populateProgramSelect();
+
   document.getElementById('fProgram').value = '';
   document.getElementById('taskModalOverlay').classList.add('open');
+
   setTimeout(() => document.getElementById('fTitle').focus(), 100);
 }
 
 function openEditTask(id) {
   const t = state.tasks.find(x => x.id === id);
   if (!t) return;
+
   state.editingTaskId = id;
+
   document.getElementById('taskModalTitle').textContent = 'Edit Task';
   document.getElementById('taskSubmitBtn').textContent = 'Save Changes';
   document.getElementById('fTitle').value = t.title;
@@ -373,16 +561,21 @@ function openEditTask(id) {
   document.getElementById('fDueDate').value = t.dueDate || '';
   document.getElementById('fPriority').value = t.priority || 'Medium';
   document.getElementById('fGroupLabel').value = t.groupLabel || '';
+
   populateProgramSelect();
+
   document.getElementById('fProgram').value = t.programId || '';
   document.getElementById('taskModalOverlay').classList.add('open');
 }
 
-function closeTaskModal() { document.getElementById('taskModalOverlay').classList.remove('open'); }
+function closeTaskModal() {
+  document.getElementById('taskModalOverlay').classList.remove('open');
+}
 
 function saveTask() {
   const title = document.getElementById('fTitle').value.trim();
   if (!title) return;
+
   const data = {
     title,
     category: document.getElementById('fCategory').value,
@@ -391,12 +584,14 @@ function saveTask() {
     priority: document.getElementById('fPriority').value,
     groupLabel: document.getElementById('fGroupLabel').value.trim() || null,
   };
+
   if (state.editingTaskId) {
     const t = state.tasks.find(x => x.id === state.editingTaskId);
     if (t) Object.assign(t, data);
   } else {
     state.tasks.push({ id: uid(), ...data, done: false });
   }
+
   save();
   closeTaskModal();
   render();
@@ -408,25 +603,38 @@ function openProgramModal() {
   document.getElementById('programModalOverlay').classList.add('open');
   setTimeout(() => document.getElementById('newProgramInput').focus(), 100);
 }
-function closeProgramModal() { document.getElementById('programModalOverlay').classList.remove('open'); }
+
+function closeProgramModal() {
+  document.getElementById('programModalOverlay').classList.remove('open');
+}
 
 function renderProgramsList() {
   const el = document.getElementById('programsList');
+
   if (!state.programs.length) {
     el.innerHTML = '<span class="programs-hint">No programs yet — add one above.</span>';
     return;
   }
+
   el.innerHTML = state.programs.map((p, i) =>
-    makeTag(p.label, PROGRAM_COLORS[i % PROGRAM_COLORS.length], false, `event.stopPropagation();removeProgram('${p.id}')`)
+    makeTag(
+      p.label,
+      PROGRAM_COLORS[i % PROGRAM_COLORS.length],
+      false,
+      `event.stopPropagation();removeProgram('${p.id}')`
+    )
   ).join('');
 }
 
 function addProgram() {
   const inp = document.getElementById('newProgramInput');
   const name = inp.value.trim();
+
   if (!name || state.programs.find(p => p.label.toLowerCase() === name.toLowerCase())) return;
+
   state.programs.push({ id: uid(), label: name });
   inp.value = '';
+
   save();
   renderProgramsList();
   render();
@@ -434,7 +642,10 @@ function addProgram() {
 
 function removeProgram(id) {
   state.programs = state.programs.filter(p => p.id !== id);
-  state.tasks.forEach(t => { if (t.programId === id) t.programId = null; });
+  state.tasks.forEach(t => {
+    if (t.programId === id) t.programId = null;
+  });
+
   save();
   renderProgramsList();
   render();
